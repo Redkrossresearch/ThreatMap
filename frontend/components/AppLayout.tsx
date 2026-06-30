@@ -214,6 +214,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <span className="material-symbols-outlined text-[20px]">psychology</span>,
     },
     {
+      name: "User Trust Score",
+      href: "/user-trust-score",
+      icon: <span className="material-symbols-outlined text-[20px]">verified_user</span>,
+    },
+    {
       name: "About",
       href: "/about",
       icon: <span className="material-symbols-outlined text-[20px]">info</span>,
