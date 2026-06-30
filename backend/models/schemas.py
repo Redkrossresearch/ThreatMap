@@ -83,3 +83,47 @@ class DashboardStats(BaseModel):
     alerts: List[AlertResponse]
     threat_distribution: Dict[str, int] # e.g. {"critical": 25, "high": 35, "medium": 30, "low": 10}
     malware_prevalence: List[Dict[str, Any]] # e.g. [{"name": "Ransom.LockBit", "percentage": 82, "trend": "up"}]
+
+
+# Burnout Schemes
+class BurnoutBase(BaseModel):
+    employee_id: str
+    employee_name: str
+    department: Optional[str] = None
+    login_time: Optional[datetime] = None
+    logout_time: Optional[datetime] = None
+    working_hours: Optional[int] = 0
+    overtime_hours: Optional[int] = 0
+    weekend_logins: Optional[int] = 0
+    after_hours_logins: Optional[int] = 0
+    failed_login_attempts: Optional[int] = 0
+    device_information: Optional[str] = None
+    ip_address: Optional[str] = None
+
+class BurnoutCreate(BurnoutBase):
+    pass
+
+class BurnoutUpdate(BaseModel):
+    employee_name: Optional[str] = None
+    department: Optional[str] = None
+    login_time: Optional[datetime] = None
+    logout_time: Optional[datetime] = None
+    working_hours: Optional[int] = None
+    overtime_hours: Optional[int] = None
+    weekend_logins: Optional[int] = None
+    after_hours_logins: Optional[int] = None
+    failed_login_attempts: Optional[int] = None
+    device_information: Optional[str] = None
+    ip_address: Optional[str] = None
+
+class BurnoutResponse(BurnoutBase):
+    id: int
+    last_activity: datetime
+    burnout_risk_score: int
+    burnout_risk_level: str
+    ai_recommendation: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+

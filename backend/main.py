@@ -94,11 +94,13 @@ except Exception as e:
 
 try:
     from routers import tools
-    print("tools router imported OK")
+    from routers import burnout
+    print("tools & burnout routers imported OK")
 except Exception as e:
-    print(f"tools router failed: {e}")
+    print(f"tools/burnout router failed: {e}")
     traceback.print_exc()
     tools = None
+    burnout = None
 
 # Setup logs
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -153,6 +155,21 @@ async def keepalive_ping():
         except Exception as e:
             logger.error(f"Keepalive ping failed: {e}")
 
+def seed_burnout_data():
+    try:
+        db = next(get_db())
+        from models.database import Burnout
+        if db.query(Burnout).count() == 0:
+            logger.info("Seeding initial burnout data...")
+            sample_data = [
+                Burnout(employee_id="E001", employee_name="Alice Smith", department="Engineering", working_hours=65, overtime_hours=25, weekend_logins=4, after_hours_logins=6, burnout_risk_score=78, burnout_risk_level="HIGH", ai_recommendation="Analysis: High burnout risk detected due to 65 working hours and 4 weekend logins. Recommended Action: Mandatory cool-down period. Temporarily revoke non-essential access outside core hours."),
+                Burnout(employee_id="E002", employee_name="Bob Jones", department="Sales", working_hours=42, overtime_hours=2, weekend_logins=0, after_hours_logins=1, burnout_risk_score=15, burnout_risk_level="LOW", ai_recommendation="Analysis: Normal working patterns detected. No immediate risk. Recommended Action: Continue standard monitoring.")
+            ]
+            db.add_all(sample_data)
+            db.commit()
+    except Exception as e:
+        logger.error(f"Error seeding data: {e}")
+
 # Database Setup on Startup
 @app.on_event("startup")
 def startup_event():
@@ -160,6 +177,7 @@ def startup_event():
     try:
         init_db()
         logger.info("Database loaded successfully.")
+        seed_burnout_data()
     except Exception as e:
         logger.error(f"Database init failed: {e}")
     asyncio.create_task(keepalive_ping())
@@ -226,6 +244,8 @@ if chat:
     app.include_router(chat.router, prefix=settings.API_V1_STR)
 if tools:
     app.include_router(tools.router, prefix=settings.API_V1_STR)
+if burnout:
+    app.include_router(burnout.router, prefix=settings.API_V1_STR)
 if alert_router:
     app.include_router(alert_router)
 

@@ -100,6 +100,30 @@ class CommunityNote(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
+class Burnout(Base):
+    __tablename__ = "burnout_records"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    employee_id = Column(String(100), index=True, nullable=False)
+    employee_name = Column(String(255), nullable=False)
+    department = Column(String(255), nullable=True)
+    login_time = Column(DateTime, nullable=True)
+    logout_time = Column(DateTime, nullable=True)
+    working_hours = Column(Integer, default=0) # Storing as integer (e.g. hours or minutes) or Float
+    overtime_hours = Column(Integer, default=0)
+    weekend_logins = Column(Integer, default=0)
+    after_hours_logins = Column(Integer, default=0)
+    failed_login_attempts = Column(Integer, default=0)
+    device_information = Column(String(500), nullable=True)
+    ip_address = Column(String(100), nullable=True)
+    last_activity = Column(DateTime, default=datetime.datetime.utcnow)
+    burnout_risk_score = Column(Integer, default=0)
+    burnout_risk_level = Column(String(50), default="LOW")
+    ai_recommendation = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

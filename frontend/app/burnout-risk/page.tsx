@@ -9,7 +9,8 @@ import {
   ShieldAlert, 
   BrainCircuit, 
   Calendar,
-  History
+  History,
+  Loader2
 } from "lucide-react";
 import { 
   BarChart, 
@@ -23,40 +24,23 @@ import {
   Area
 } from "recharts";
 
-// --- MOCK DATA ---
-const weeklyActivity = [
-  { day: "Mon", hours: 8.5, afterHours: 0.5 },
-  { day: "Tue", hours: 9.2, afterHours: 1.2 },
-  { day: "Wed", hours: 11.5, afterHours: 3.5 },
-  { day: "Thu", hours: 10.8, afterHours: 2.8 },
-  { day: "Fri", hours: 12.1, afterHours: 4.1 },
-  { day: "Sat", hours: 4.5, afterHours: 4.5 },
-  { day: "Sun", hours: 2.0, afterHours: 2.0 },
-];
-
-const timelineData = [
-  { time: "08:00", activity: 20 },
-  { time: "10:00", activity: 85 },
-  { time: "12:00", activity: 60 },
-  { time: "14:00", activity: 90 },
-  { time: "16:00", activity: 75 },
-  { time: "18:00", activity: 95 }, // Start of unusual overtime
-  { time: "20:00", activity: 80 },
-  { time: "22:00", activity: 65 },
-  { time: "00:00", activity: 40 },
-  { time: "02:00", activity: 15 },
-];
-
-const abnormalEvents = [
-  { id: 1, type: "after_hours", label: "After-hours VPN Access", time: "23:45 PM", severity: "high" },
-  { id: 2, type: "failed_login", label: "Multiple Failed Logins", time: "01:12 AM", severity: "medium" },
-  { id: 3, type: "excessive_hours", label: "Consecutive 12h+ shifts", time: "3 Days", severity: "high" },
-  { id: 4, type: "weekend_access", label: "Unusual Weekend DB Query", time: "Sat, 14:30", severity: "low" },
-];
+// --- TYPES ---
+interface BurnoutRecord {
+  id: number;
+  employee_id: string;
+  employee_name: string;
+  department: string;
+  working_hours: number;
+  overtime_hours: number;
+  weekend_logins: number;
+  after_hours_logins: number;
+  failed_login_attempts: number;
+  burnout_risk_score: number;
+  burnout_risk_level: string;
+  ai_recommendation: string;
+}
 
 // --- COMPONENTS ---
-
-// Animated Circular Progress for Risk Score
 const RiskScoreCircle = ({ score }: { score: number }) => {
   const [progress, setProgress] = useState(0);
   
@@ -118,9 +102,106 @@ const RiskScoreCircle = ({ score }: { score: number }) => {
 };
 
 export default function BurnoutRiskDashboard() {
-  const currentRiskScore = 78;
-  const riskLevel = currentRiskScore >= 75 ? "HIGH" : currentRiskScore >= 40 ? "MEDIUM" : "LOW";
+  const [data, setData] = useState<BurnoutRecord | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        // Fallback for base url matching other files
+        const BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+        const res = await fetch(`${BASE}/api/burnout`);
+        if (!res.ok) throw new Error("Failed to fetch burnout records");
+        const records: BurnoutRecord[] = await res.json();
+        
+        if (records && records.length > 0) {
+          // Find the record with highest risk to display or first one
+          const highestRiskRecord = records.reduce((prev, current) => 
+            (prev.burnout_risk_score > current.burnout_risk_score) ? prev : current
+          );
+          setData(highestRiskRecord);
+        } else {
+          setError("No burnout records found in database.");
+        }
+      } catch (err: any) {
+        setError(err.message || "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <Loader2 className="animate-spin text-primary w-8 h-8" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex h-[80vh] flex-col items-center justify-center space-y-4">
+        <ShieldAlert className="text-error w-12 h-12" />
+        <h2 className="text-xl font-bold text-white">Error Loading Data</h2>
+        <p className="text-on-surface-variant">{error || "No data available"}</p>
+      </div>
+    );
+  }
+
+  const currentRiskScore = data.burnout_risk_score;
+  const riskLevel = data.burnout_risk_level;
+
+  // Derive charts from the data record
+  // (In a real app, this would be fetched from daily logs, here we approximate from totals)
+  const coreHoursPerDay = Math.floor(data.working_hours / 5) || 8;
+  const afterHoursPerDay = Math.floor(data.after_hours_logins / 5) || 0;
   
+  const weeklyActivity = [
+    { day: "Mon", hours: coreHoursPerDay, afterHours: afterHoursPerDay },
+    { day: "Tue", hours: coreHoursPerDay + 1.2, afterHours: afterHoursPerDay + 0.5 },
+    { day: "Wed", hours: coreHoursPerDay, afterHours: afterHoursPerDay + 1 },
+    { day: "Thu", hours: coreHoursPerDay - 0.5, afterHours: afterHoursPerDay },
+    { day: "Fri", hours: coreHoursPerDay + 2, afterHours: afterHoursPerDay + 2 },
+    { day: "Sat", hours: data.weekend_logins > 0 ? 4 : 0, afterHours: data.weekend_logins },
+    { day: "Sun", hours: data.weekend_logins > 1 ? 2 : 0, afterHours: 0 },
+  ];
+
+  const timelineData = [
+    { time: "08:00", activity: 20 },
+    { time: "10:00", activity: 85 },
+    { time: "12:00", activity: 60 },
+    { time: "14:00", activity: 90 },
+    { time: "16:00", activity: 75 },
+    { time: "18:00", activity: 95 }, 
+    { time: "20:00", activity: data.after_hours_logins > 0 ? 80 : 30 },
+    { time: "22:00", activity: data.after_hours_logins > 2 ? 65 : 10 },
+    { time: "00:00", activity: data.after_hours_logins > 4 ? 40 : 5 },
+    { time: "02:00", activity: 15 },
+  ];
+
+  const abnormalEvents = [];
+  if (data.after_hours_logins > 0) {
+    abnormalEvents.push({ id: 1, type: "after_hours", label: "After-hours VPN Access", time: "Recent", severity: data.after_hours_logins > 5 ? "high" : "medium" });
+  }
+  if (data.failed_login_attempts > 0) {
+    abnormalEvents.push({ id: 2, type: "failed_login", label: "Multiple Failed Logins", time: "Recent", severity: data.failed_login_attempts > 5 ? "high" : "medium" });
+  }
+  if (data.working_hours > 50) {
+    abnormalEvents.push({ id: 3, type: "excessive_hours", label: "Excessive Working Hours", time: "This Week", severity: data.working_hours > 60 ? "high" : "medium" });
+  }
+  if (data.weekend_logins > 0) {
+    abnormalEvents.push({ id: 4, type: "weekend_access", label: "Unusual Weekend Access", time: "Weekend", severity: "medium" });
+  }
+
+  // Fallback if no anomalies
+  if (abnormalEvents.length === 0) {
+    abnormalEvents.push({ id: 0, type: "normal", label: "No abnormal events detected", time: "-", severity: "low" });
+  }
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12 px-4 md:px-8 mt-6">
       
@@ -129,7 +210,7 @@ export default function BurnoutRiskDashboard() {
         <div>
           <h1 className="text-2xl font-black text-white font-headline-lg flex items-center gap-3">
             <Activity className="text-primary" />
-            Employee Burnout Risk Detection
+            Employee Burnout Risk: {data.employee_name}
           </h1>
           <p className="text-sm text-on-surface-variant mt-1">
             Behavioral analysis of work patterns, access times, and anomalies to prevent burnout and insider threats.
@@ -179,13 +260,17 @@ export default function BurnoutRiskDashboard() {
 
           <div className="flex-1 relative z-10 flex flex-col justify-center space-y-4">
             <p className="text-sm leading-relaxed text-on-surface">
-              <span className="text-white font-bold">Analysis:</span> The system has detected a consistent pattern of after-hours logins extending past 10:00 PM for the last 3 consecutive days, combined with a 45% increase in weekend VPN activity. This behavioral signature strongly correlates with high burnout risk and potential security oversight due to fatigue.
+              <span className="text-white font-bold">Analysis:</span> {data.ai_recommendation?.split("Recommended Action:")[0].replace("Analysis:", "").trim()}
             </p>
             <div className="p-4 bg-error/10 border border-error/20 rounded-lg flex items-start gap-3">
               <ShieldAlert className="text-error shrink-0 mt-0.5" size={18} />
               <div>
                 <h4 className="text-xs font-bold text-error uppercase mb-1">Recommended Action</h4>
-                <p className="text-xs text-on-surface-variant">Enforce mandatory cool-down period. Temporarily revoke non-essential VPN access outside of core business hours (9AM-6PM). Schedule a mandatory check-in with the employee's line manager.</p>
+                <p className="text-xs text-on-surface-variant">
+                  {data.ai_recommendation?.includes("Recommended Action:") 
+                    ? data.ai_recommendation.split("Recommended Action:")[1].trim()
+                    : "No immediate action required."}
+                </p>
               </div>
             </div>
           </div>
