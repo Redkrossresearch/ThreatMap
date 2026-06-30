@@ -5,21 +5,74 @@ import { motion } from "framer-motion";
 
 export default function CyberExposurePage() {
   const [score, setScore] = useState(0);
-  const targetScore = 72; // Out of 100
-  
-  useEffect(() => {
-    const timer = setTimeout(() => setScore(targetScore), 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const [targetScore, setTargetScore] = useState(0);
+  const [levelInfo, setLevelInfo] = useState({ text: "Low", color: "text-green-500", shadow: "shadow-green-500/50" });
+  const [breakdown, setBreakdown] = useState({ publicIps: 0, openPorts: 0, leakedCreds: 0, vulnServices: 0 });
+  const [systems, setSystems] = useState<any[]>([]);
+  const [recs, setRecs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const getExposureLevel = (val: number) => {
-    if (val < 30) return { text: "Critical", color: "text-red-500", shadow: "shadow-red-500/50" };
-    if (val < 60) return { text: "High", color: "text-orange-500", shadow: "shadow-orange-500/50" };
-    if (val < 80) return { text: "Medium", color: "text-yellow-500", shadow: "shadow-yellow-500/50" };
-    return { text: "Low", color: "text-green-500", shadow: "shadow-green-500/50" };
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      // Fetch summary and assets
+      const summaryRes = await fetch("http://localhost:8000/api/v1/cyber-exposure/summary");
+      const summary = await summaryRes.json();
+      
+      const assetsRes = await fetch("http://localhost:8000/api/v1/cyber-exposure");
+      const assets = await assetsRes.json();
+
+      setTargetScore(summary.overall_score);
+      setScore(0);
+      setTimeout(() => setScore(summary.overall_score), 500);
+
+      const getExposureLevel = (val: number) => {
+        if (val <= 30) return { text: "Critical", color: "text-red-500", shadow: "shadow-red-500/50" };
+        if (val <= 70) return { text: "Medium", color: "text-yellow-500", shadow: "shadow-yellow-500/50" };
+        if (val <= 90) return { text: "High", color: "text-orange-500", shadow: "shadow-orange-500/50" };
+        return { text: "Low", color: "text-green-500", shadow: "shadow-green-500/50" };
+      };
+      setLevelInfo(getExposureLevel(summary.overall_score));
+
+      setBreakdown({
+        publicIps: summary.breakdown?.public_ips || 0,
+        openPorts: summary.breakdown?.open_ports || 0,
+        leakedCreds: summary.breakdown?.leaked_credentials || 0,
+        vulnServices: summary.breakdown?.vulnerable_services || 0
+      });
+
+      // Parse assets for Top Exposed Systems and Recommendations
+      const sysList = assets.slice(0, 4).map((a: any) => ({
+        ip: a.ip_address || "N/A",
+        name: a.asset_name,
+        risk: a.exposure_level,
+        ports: a.open_ports ? a.open_ports.join(", ") : "None"
+      }));
+      setSystems(sysList);
+
+      const recList = assets.filter((a: any) => a.vulnerability_count > 0).slice(0, 3).map((a: any) => ({
+        title: `Patch ${a.asset_name}`,
+        desc: a.ai_recommendation,
+        icon: a.exposure_level === "Critical" ? "lock_open" : "security_update_warning",
+        color: a.exposure_level === "Critical" ? "text-red-400" : "text-orange-400"
+      }));
+      if (recList.length === 0) {
+        recList.push({ title: "All Secure", desc: "No critical vulnerabilities found.", icon: "check_circle", color: "text-green-400" });
+      }
+      setRecs(recList);
+
+    } catch (err) {
+      console.error("Failed to fetch exposure data", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const levelInfo = getExposureLevel(targetScore);
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  // Level info and data fetched from backend
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -60,8 +113,8 @@ export default function CyberExposurePage() {
               Real-time analysis of your organization's digital footprint, exposed assets, and potential attack vectors.
             </p>
           </div>
-          <button className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-lg transition-all flex items-center gap-2 text-sm font-semibold">
-            <span className="material-symbols-outlined text-[18px]">refresh</span>
+          <button onClick={fetchDashboardData} disabled={loading} className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-lg transition-all flex items-center gap-2 text-sm font-semibold">
+            <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>refresh</span>
             Rescan Now
           </button>
         </motion.div>
@@ -140,10 +193,10 @@ export default function CyberExposurePage() {
             </h2>
             <div className="space-y-4">
               {[
-                { label: "Public IPs", val: 45, max: 100, color: "bg-blue-500" },
-                { label: "Open Ports", val: 120, max: 200, color: "bg-purple-500" },
-                { label: "Leaked Credentials", val: 12, max: 50, color: "bg-red-500" },
-                { label: "Vulnerable Services", val: 8, max: 20, color: "bg-orange-500" },
+                { label: "Public IPs", val: breakdown.publicIps, max: 100, color: "bg-blue-500" },
+                { label: "Open Ports", val: breakdown.openPorts, max: 200, color: "bg-purple-500" },
+                { label: "Leaked Credentials", val: breakdown.leakedCreds, max: 50, color: "bg-red-500" },
+                { label: "Vulnerable Services", val: breakdown.vulnServices, max: 20, color: "bg-orange-500" },
               ].map((item, idx) => (
                 <div key={idx} className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -170,22 +223,19 @@ export default function CyberExposurePage() {
               Top Exposed Systems
             </h2>
             <div className="space-y-3">
-              {[
-                { ip: "192.168.1.105", name: "Gateway Router", risk: "High", ports: "22, 80, 443" },
-                { ip: "10.0.0.50", name: "Legacy DB", risk: "Critical", ports: "3306" },
-                { ip: "172.16.0.12", name: "Staging Server", risk: "Medium", ports: "8080" },
-                { ip: "192.168.1.200", name: "IoT Controller", risk: "High", ports: "21, 23" },
-              ].map((sys, idx) => (
+              {systems.length > 0 ? systems.map((sys, idx) => (
                 <div key={idx} className="group p-3 rounded-xl bg-white/5 border border-transparent hover:border-white/10 hover:bg-white/10 transition-all flex justify-between items-center cursor-pointer">
                   <div>
                     <div className="text-white text-sm font-semibold mb-1 group-hover:text-primary transition-colors">{sys.name}</div>
                     <div className="text-xs text-on-surface-variant font-mono">{sys.ip} • Ports: {sys.ports}</div>
                   </div>
-                  <div className={`text-xs px-2 py-1 rounded border border-white/10 ${sys.risk === 'Critical' ? 'bg-red-500/20 text-red-400' : sys.risk === 'High' ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                  <div className={`text-xs px-2 py-1 rounded border border-white/10 ${sys.risk === 'Critical' ? 'bg-red-500/20 text-red-400' : sys.risk === 'High' ? 'bg-orange-500/20 text-orange-400' : sys.risk === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
                     {sys.risk}
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-on-surface-variant text-sm">No exposed systems detected.</div>
+              )}
             </div>
           </motion.div>
         </div>
@@ -197,11 +247,7 @@ export default function CyberExposurePage() {
             AI-Generated Recommendations
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              { title: "Close Open Port 3306", desc: "Legacy DB (10.0.0.50) is exposing MySQL port publicly.", icon: "lock_open", color: "text-red-400" },
-              { title: "Patch Gateway Router", desc: "CVE-2023-48795 detected on Gateway Router SSH service.", icon: "security_update_warning", color: "text-orange-400" },
-              { title: "Rotate Staging Credentials", desc: "Leaked credentials found in recent dark web dump.", icon: "password", color: "text-yellow-400" },
-            ].map((rec, idx) => (
+            {recs.map((rec, idx) => (
               <div key={idx} className="p-4 rounded-xl bg-surface/50 border border-white/5 hover:border-primary/30 transition-colors">
                 <span className={`material-symbols-outlined mb-3 ${rec.color}`}>{rec.icon}</span>
                 <h3 className="text-sm font-semibold text-white mb-2">{rec.title}</h3>

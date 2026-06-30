@@ -100,6 +100,33 @@ class CommunityNote(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
+class CyberExposureAsset(Base):
+    __tablename__ = "cyber_exposure_assets"
+
+    id = Column(String(36), primary_key=True, index=True)
+    asset_name = Column(String(255), index=True, nullable=False)
+    asset_type = Column(String(100), nullable=False)
+    ip_address = Column(String(100), nullable=True)
+    hostname = Column(String(255), nullable=True)
+    operating_system = Column(String(100), nullable=True)
+    open_ports = Column(JSON, nullable=True)
+    running_services = Column(JSON, nullable=True)
+    public_exposure_status = Column(Boolean, default=False)
+    
+    critical_cves = Column(Integer, default=0)
+    high_cves = Column(Integer, default=0)
+    medium_cves = Column(Integer, default=0)
+    low_cves = Column(Integer, default=0)
+    vulnerability_count = Column(Integer, default=0)
+    
+    attack_surface_score = Column(Integer, default=0)
+    exposure_score = Column(Integer, default=0)
+    exposure_level = Column(String(50), default="Low") # Low, Medium, High, Critical
+    
+    ai_recommendation = Column(Text, nullable=True)
+    last_scan_time = Column(DateTime, default=datetime.datetime.utcnow)
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

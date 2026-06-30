@@ -83,3 +83,45 @@ class DashboardStats(BaseModel):
     alerts: List[AlertResponse]
     threat_distribution: Dict[str, int] # e.g. {"critical": 25, "high": 35, "medium": 30, "low": 10}
     malware_prevalence: List[Dict[str, Any]] # e.g. [{"name": "Ransom.LockBit", "percentage": 82, "trend": "up"}]
+
+class AssetBase(BaseModel):
+    asset_name: str
+    asset_type: str
+    ip_address: Optional[str] = None
+    hostname: Optional[str] = None
+    operating_system: Optional[str] = None
+    open_ports: Optional[List[int]] = None
+    running_services: Optional[List[str]] = None
+    public_exposure_status: bool = False
+    critical_cves: int = 0
+    high_cves: int = 0
+    medium_cves: int = 0
+    low_cves: int = 0
+    vulnerability_count: int = 0
+    attack_surface_score: int = 0
+    exposure_score: int = 0
+    exposure_level: str = "Low"
+    ai_recommendation: Optional[str] = None
+
+class AssetCreate(AssetBase):
+    pass
+
+class AssetUpdate(BaseModel):
+    asset_name: Optional[str] = None
+    asset_type: Optional[str] = None
+    ip_address: Optional[str] = None
+    hostname: Optional[str] = None
+    operating_system: Optional[str] = None
+    open_ports: Optional[List[int]] = None
+    running_services: Optional[List[str]] = None
+    public_exposure_status: Optional[bool] = None
+    critical_cves: Optional[int] = None
+    high_cves: Optional[int] = None
+    medium_cves: Optional[int] = None
+    low_cves: Optional[int] = None
+
+class AssetResponse(AssetBase):
+    id: str
+    last_scan_time: datetime
+
+    model_config = ConfigDict(from_attributes=True)

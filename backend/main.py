@@ -100,6 +100,14 @@ except Exception as e:
     traceback.print_exc()
     tools = None
 
+try:
+    from routers import cyber_exposure
+    print("cyber_exposure router imported OK")
+except Exception as e:
+    print(f"cyber_exposure router failed: {e}")
+    traceback.print_exc()
+    cyber_exposure = None
+
 # Setup logs
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -160,8 +168,42 @@ def startup_event():
     try:
         init_db()
         logger.info("Database loaded successfully.")
+        
+        # Seed Cyber Exposure data if empty
+        from models.database import SessionLocal, CyberExposureAsset
+        import uuid
+        import datetime
+        db = SessionLocal()
+        if db.query(CyberExposureAsset).count() == 0:
+            logger.info("Seeding Cyber Exposure Assets...")
+            seed_data = [
+                {"name": "Gateway Router", "type": "Network", "ip": "192.168.1.105", "ports": [22, 80, 443], "cves": [1, 2, 1, 0], "exposed": True},
+                {"name": "Legacy DB", "type": "Database", "ip": "10.0.0.50", "ports": [3306], "cves": [3, 1, 0, 0], "exposed": True},
+                {"name": "Staging Server", "type": "Server", "ip": "172.16.0.12", "ports": [8080], "cves": [0, 1, 3, 2], "exposed": False},
+                {"name": "IoT Controller", "type": "IoT", "ip": "192.168.1.200", "ports": [21, 23], "cves": [2, 1, 0, 0], "exposed": True}
+            ]
+            for sd in seed_data:
+                from routers.cyber_exposure import calculate_asset_exposure
+                from models.schemas import AssetCreate
+                asset_in = AssetCreate(
+                    asset_name=sd["name"], asset_type=sd["type"], ip_address=sd["ip"], 
+                    open_ports=sd["ports"], public_exposure_status=sd["exposed"],
+                    critical_cves=sd["cves"][0], high_cves=sd["cves"][1], medium_cves=sd["cves"][2], low_cves=sd["cves"][3]
+                )
+                calc = calculate_asset_exposure(asset_in)
+                db_asset = CyberExposureAsset(
+                    id=str(uuid.uuid4()), asset_name=sd["name"], asset_type=sd["type"],
+                    ip_address=sd["ip"], open_ports=sd["ports"], public_exposure_status=sd["exposed"],
+                    critical_cves=sd["cves"][0], high_cves=sd["cves"][1], medium_cves=sd["cves"][2], low_cves=sd["cves"][3],
+                    vulnerability_count=calc["vulnerability_count"], attack_surface_score=calc["attack_surface_score"],
+                    exposure_score=calc["exposure_score"], exposure_level=calc["exposure_level"], ai_recommendation=calc["ai_recommendation"]
+                )
+                db.add(db_asset)
+            db.commit()
+            db.close()
+            
     except Exception as e:
-        logger.error(f"Database init failed: {e}")
+        logger.error(f"Database init/seed failed: {e}")
     asyncio.create_task(keepalive_ping())
 
 # WebSocket Connection Manager
@@ -226,6 +268,8 @@ if chat:
     app.include_router(chat.router, prefix=settings.API_V1_STR)
 if tools:
     app.include_router(tools.router, prefix=settings.API_V1_STR)
+if cyber_exposure:
+    app.include_router(cyber_exposure.router, prefix=settings.API_V1_STR)
 if alert_router:
     app.include_router(alert_router)
 
