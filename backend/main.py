@@ -95,12 +95,14 @@ except Exception as e:
 try:
     from routers import tools
     from routers import burnout
-    print("tools & burnout routers imported OK")
+    from routers import insider_motivation
+    print("tools, burnout & insider_motivation routers imported OK")
 except Exception as e:
-    print(f"tools/burnout router failed: {e}")
+    print(f"tools/burnout/insider_motivation router failed: {e}")
     traceback.print_exc()
     tools = None
     burnout = None
+    insider_motivation = None
 
 # Setup logs
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -170,6 +172,42 @@ def seed_burnout_data():
     except Exception as e:
         logger.error(f"Error seeding data: {e}")
 
+def seed_insider_motivation_data():
+    try:
+        db = next(get_db())
+        from models.database import InsiderMotivationRecord
+        if db.query(InsiderMotivationRecord).count() == 0:
+            logger.info("Seeding initial insider motivation data...")
+            sample_data = [
+                InsiderMotivationRecord(
+                    employee_id="E-8472", 
+                    employee_name="Alice Smith", 
+                    department="Engineering", 
+                    data_exfiltration_volume_mb=2400,
+                    after_hours_logins=7,
+                    failed_login_attempts=2,
+                    privilege_escalation_attempts=1,
+                    unauthorized_directory_accesses=4,
+                    score_financial=88,
+                    score_revenge=25,
+                    score_negligence=40,
+                    score_curiosity=70,
+                    score_external_influence=15,
+                    primary_motivation="Financial",
+                    ai_recommendation="Analysis: High probability of financial motivation detected due to significant data exfiltration patterns and after-hours activity. Recommended Action: Initiate immediate account suspension to prevent further data exfiltration. Isolate workstation and alert Incident Response.",
+                    suspicious_events=[
+                        {"id": 1, "time": "Today, 14:30", "event": "Large outbound data transfer to unknown cloud storage (2.4 GB)", "severity": "critical"},
+                        {"id": 2, "time": "Today, 11:15", "event": "Queried highly sensitive financial records outside normal duties", "severity": "high"},
+                        {"id": 3, "time": "Yesterday, 18:45", "event": "Searched intranet for 'how to bypass DLP'", "severity": "high"},
+                        {"id": 4, "time": "Yesterday, 09:00", "event": "Accessed unassigned project repositories out of curiosity", "severity": "medium"}
+                    ]
+                )
+            ]
+            db.add_all(sample_data)
+            db.commit()
+    except Exception as e:
+        logger.error(f"Error seeding insider motivation data: {e}")
+
 # Database Setup on Startup
 @app.on_event("startup")
 def startup_event():
@@ -178,6 +216,7 @@ def startup_event():
         init_db()
         logger.info("Database loaded successfully.")
         seed_burnout_data()
+        seed_insider_motivation_data()
     except Exception as e:
         logger.error(f"Database init failed: {e}")
     asyncio.create_task(keepalive_ping())
@@ -246,6 +285,8 @@ if tools:
     app.include_router(tools.router, prefix=settings.API_V1_STR)
 if burnout:
     app.include_router(burnout.router, prefix=settings.API_V1_STR)
+if insider_motivation:
+    app.include_router(insider_motivation.router, prefix=settings.API_V1_STR)
 if alert_router:
     app.include_router(alert_router)
 

@@ -124,6 +124,37 @@ class Burnout(Base):
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
 
+class InsiderMotivationRecord(Base):
+    __tablename__ = "insider_motivations"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    employee_id = Column(String(100), index=True, nullable=False)
+    employee_name = Column(String(255), nullable=False)
+    department = Column(String(255), nullable=True)
+    
+    # Behavior metrics
+    data_exfiltration_volume_mb = Column(Integer, default=0)
+    after_hours_logins = Column(Integer, default=0)
+    failed_login_attempts = Column(Integer, default=0)
+    privilege_escalation_attempts = Column(Integer, default=0)
+    unauthorized_directory_accesses = Column(Integer, default=0)
+    device_information = Column(String(500), nullable=True)
+    ip_address = Column(String(100), nullable=True)
+    suspicious_events = Column(JSON, nullable=True) # List of dicts e.g., [{"time": "...", "event": "...", "severity": "..."}]
+    
+    # Calculated scores
+    score_financial = Column(Integer, default=0)
+    score_revenge = Column(Integer, default=0)
+    score_negligence = Column(Integer, default=0)
+    score_curiosity = Column(Integer, default=0)
+    score_external_influence = Column(Integer, default=0)
+    
+    primary_motivation = Column(String(100), default="None")
+    ai_recommendation = Column(Text, nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

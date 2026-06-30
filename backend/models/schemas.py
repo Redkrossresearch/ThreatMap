@@ -127,3 +127,46 @@ class BurnoutResponse(BurnoutBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+# Insider Motivation Schemes
+class InsiderMotivationBase(BaseModel):
+    employee_id: str
+    employee_name: str
+    department: Optional[str] = None
+    data_exfiltration_volume_mb: Optional[int] = 0
+    after_hours_logins: Optional[int] = 0
+    failed_login_attempts: Optional[int] = 0
+    privilege_escalation_attempts: Optional[int] = 0
+    unauthorized_directory_accesses: Optional[int] = 0
+    device_information: Optional[str] = None
+    ip_address: Optional[str] = None
+    suspicious_events: Optional[List[Dict[str, Any]]] = None
+
+class InsiderMotivationCreate(InsiderMotivationBase):
+    pass
+
+class InsiderMotivationUpdate(BaseModel):
+    employee_name: Optional[str] = None
+    department: Optional[str] = None
+    data_exfiltration_volume_mb: Optional[int] = None
+    after_hours_logins: Optional[int] = None
+    failed_login_attempts: Optional[int] = None
+    privilege_escalation_attempts: Optional[int] = None
+    unauthorized_directory_accesses: Optional[int] = None
+    device_information: Optional[str] = None
+    ip_address: Optional[str] = None
+    suspicious_events: Optional[List[Dict[str, Any]]] = None
+
+class InsiderMotivationResponse(InsiderMotivationBase):
+    id: int
+    score_financial: int
+    score_revenge: int
+    score_negligence: int
+    score_curiosity: int
+    score_external_influence: int
+    primary_motivation: str
+    ai_recommendation: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

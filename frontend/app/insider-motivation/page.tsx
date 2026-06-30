@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Radar as RadarIcon, 
@@ -9,7 +9,8 @@ import {
   History,
   Target,
   ShieldAlert,
-  Zap
+  Zap,
+  Loader2
 } from "lucide-react";
 import { 
   RadarChart, 
@@ -21,22 +22,55 @@ import {
   Tooltip as RechartsTooltip
 } from "recharts";
 
-const motivationData = [
-  { subject: 'Financial', score: 88, fullMark: 100 },
-  { subject: 'Revenge', score: 25, fullMark: 100 },
-  { subject: 'Negligence', score: 40, fullMark: 100 },
-  { subject: 'Curiosity', score: 70, fullMark: 100 },
-  { subject: 'Ext. Influence', score: 15, fullMark: 100 },
-];
-
-const timelineEvents = [
-  { id: 1, time: "Today, 14:30", event: "Large outbound data transfer to unknown cloud storage (2.4 GB)", severity: "critical" },
-  { id: 2, time: "Today, 11:15", event: "Queried highly sensitive financial records outside normal duties", severity: "high" },
-  { id: 3, time: "Yesterday, 18:45", event: "Searched intranet for 'how to bypass DLP'", severity: "high" },
-  { id: 4, time: "Yesterday, 09:00", event: "Accessed unassigned project repositories out of curiosity", severity: "medium" }
-];
-
 export default function InsiderMotivationDashboard() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+        const res = await fetch(`${baseUrl}/api/insider-motivation`);
+        if (!res.ok) throw new Error("Failed to fetch insider motivation data");
+        const json = await res.json();
+        if (json && json.length > 0) {
+          setData(json[0]); // Using the first user (Alice Smith) for the dashboard
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <Loader2 className="animate-spin text-primary w-10 h-10" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center text-error">
+        Error loading dashboard: {error || "No data found"}
+      </div>
+    );
+  }
+
+  const motivationData = [
+    { subject: 'Financial', score: data.score_financial, fullMark: 100 },
+    { subject: 'Revenge', score: data.score_revenge, fullMark: 100 },
+    { subject: 'Negligence', score: data.score_negligence, fullMark: 100 },
+    { subject: 'Curiosity', score: data.score_curiosity, fullMark: 100 },
+    { subject: 'Ext. Influence', score: data.score_external_influence, fullMark: 100 },
+  ];
+
+  const timelineEvents = data.suspicious_events || [];
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12 px-4 md:px-8 mt-6">
       
@@ -53,7 +87,7 @@ export default function InsiderMotivationDashboard() {
         </div>
         <div className="hidden sm:block">
            <span className="px-3 py-1 bg-error/20 text-error text-[10px] font-mono-sm uppercase border border-error/30 rounded shadow-[0_0_10px_rgba(239,68,68,0.3)]">
-             Subject: E-8472 (HIGH RISK)
+             Subject: {data.employee_id} ({data.department})
            </span>
         </div>
       </div>
@@ -96,7 +130,7 @@ export default function InsiderMotivationDashboard() {
           </div>
           
           <div className="mt-2 text-center relative z-10">
-            <span className="text-xs font-mono-sm text-on-surface-variant">Primary Driver: <strong className="text-error tracking-wider">FINANCIAL (88%)</strong></span>
+            <span className="text-xs font-mono-sm text-on-surface-variant">Primary Driver: <strong className="text-error tracking-wider uppercase">{data.primary_motivation} ({motivationData.find((d: any) => d.subject.startsWith(data.primary_motivation.substring(0,3)))?.score || 0}%)</strong></span>
           </div>
         </motion.div>
 
@@ -122,7 +156,7 @@ export default function InsiderMotivationDashboard() {
                 Risk Explanation
               </h4>
               <p className="text-sm leading-relaxed text-on-surface-variant">
-                The user's recent activity shows a stark deviation from standard operational baselines. A combination of targeting highly liquid corporate assets (financial records, customer PII) and attempting to exfiltrate them using unmonitored channels strongly indicates a <strong className="text-white">Financial Motivation</strong>. Secondary indicators suggest <strong className="text-white">Curiosity</strong> regarding the organization's DLP capabilities.
+                {data.ai_recommendation?.split('Recommended Action:')[0] || "Analysis processing..."}
               </p>
             </div>
             
@@ -131,10 +165,7 @@ export default function InsiderMotivationDashboard() {
               <div>
                 <h4 className="text-xs font-bold text-error uppercase mb-1 tracking-widest">Immediate AI Recommendations</h4>
                 <ul className="text-xs text-on-surface-variant space-y-1.5 list-disc list-inside">
-                  <li>Initiate immediate account suspension to prevent further data exfiltration.</li>
-                  <li>Isolate the user's workstation from the internal corporate network (VLAN quarantine).</li>
-                  <li>Trigger an automated forensic snapshot of the user's active session and recent cloud uploads.</li>
-                  <li>Alert the Insider Threat Task Force (ITTF) and Legal counsel.</li>
+                  <li>{data.ai_recommendation?.split('Recommended Action:')[1] || "No recommendations generated."}</li>
                 </ul>
               </div>
             </div>
