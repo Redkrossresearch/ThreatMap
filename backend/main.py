@@ -100,6 +100,14 @@ except Exception as e:
     traceback.print_exc()
     tools = None
 
+try:
+    from routers import generators
+    print("generators router imported OK")
+except Exception as e:
+    print(f"generators router failed: {e}")
+    traceback.print_exc()
+    generators = None
+
 # Setup logs
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -226,6 +234,8 @@ if chat:
     app.include_router(chat.router, prefix=settings.API_V1_STR)
 if tools:
     app.include_router(tools.router, prefix=settings.API_V1_STR)
+if generators:
+    app.include_router(generators.router, prefix=settings.API_V1_STR)
 if alert_router:
     app.include_router(alert_router)
 

@@ -114,9 +114,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <span className="material-symbols-outlined text-[20px]">analytics</span>,
     },
     {
-      name: "Sigma Rules",
-      href: "/sigma",
+      name: "Sigma Generator",
+      href: "/sigma-generator",
       icon: <span className="material-symbols-outlined text-[20px]">rule</span>,
+    },
+    {
+      name: "YARA Generator",
+      href: "/yara-generator",
+      icon: <span className="material-symbols-outlined text-[20px]">code</span>,
     },
     {
       name: "Case Management",
