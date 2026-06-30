@@ -213,6 +213,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       href: "/chat",
       icon: <span className="material-symbols-outlined text-[20px]">smart_toy</span>,
     },
+    {
+      name: "Cyber Exposure",
+      href: "/cyber-exposure",
+      icon: <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>,
+    },
   ];
 
   return (
