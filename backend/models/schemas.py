@@ -170,3 +170,57 @@ class InsiderMotivationResponse(InsiderMotivationBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# User Trust Score Schemes
+class UserTrustBase(BaseModel):
+    user_id: str
+    name: str
+    department: Optional[str] = None
+    role: Optional[str] = None
+    last_login: Optional[datetime] = None
+    failed_login_attempts: Optional[int] = 0
+    mfa_status: Optional[bool] = True
+    password_strength: Optional[str] = "STRONG"
+    device_reputation: Optional[str] = "KNOWN"
+    ip_address: Optional[str] = None
+    browser: Optional[str] = None
+    location: Optional[str] = None
+    vpn_usage: Optional[bool] = False
+    impossible_travel: Optional[bool] = False
+    account_lockouts: Optional[int] = 0
+    privilege_level: Optional[str] = "USER"
+    login_history: Optional[List[Dict[str, Any]]] = None
+    recent_security_events: Optional[List[Dict[str, Any]]] = None
+
+class UserTrustCreate(UserTrustBase):
+    pass
+
+class UserTrustUpdate(BaseModel):
+    name: Optional[str] = None
+    department: Optional[str] = None
+    role: Optional[str] = None
+    last_login: Optional[datetime] = None
+    failed_login_attempts: Optional[int] = None
+    mfa_status: Optional[bool] = None
+    password_strength: Optional[str] = None
+    device_reputation: Optional[str] = None
+    ip_address: Optional[str] = None
+    browser: Optional[str] = None
+    location: Optional[str] = None
+    vpn_usage: Optional[bool] = None
+    impossible_travel: Optional[bool] = None
+    account_lockouts: Optional[int] = None
+    privilege_level: Optional[str] = None
+    login_history: Optional[List[Dict[str, Any]]] = None
+    recent_security_events: Optional[List[Dict[str, Any]]] = None
+
+class UserTrustResponse(UserTrustBase):
+    id: int
+    trust_score: int
+    trust_level: str
+    ai_recommendation: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

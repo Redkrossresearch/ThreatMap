@@ -96,13 +96,15 @@ try:
     from routers import tools
     from routers import burnout
     from routers import insider_motivation
-    print("tools, burnout & insider_motivation routers imported OK")
+    from routers import trust_score
+    print("tools, burnout, insider_motivation, & trust_score routers imported OK")
 except Exception as e:
-    print(f"tools/burnout/insider_motivation router failed: {e}")
+    print(f"tools/burnout/insider/trust router failed: {e}")
     traceback.print_exc()
     tools = None
     burnout = None
     insider_motivation = None
+    trust_score = None
 
 # Setup logs
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -208,6 +210,33 @@ def seed_insider_motivation_data():
     except Exception as e:
         logger.error(f"Error seeding insider motivation data: {e}")
 
+def seed_user_trust_data():
+    try:
+        db = next(get_db())
+        from models.database import UserTrustRecord
+        if db.query(UserTrustRecord).count() == 0:
+            logger.info("Seeding initial user trust data...")
+            sample_data = [
+                UserTrustRecord(
+                    user_id="jdoe@company.local",
+                    name="John Doe",
+                    department="Finance",
+                    mfa_status=True,
+                    password_strength="STRONG",
+                    device_reputation="KNOWN",
+                    failed_login_attempts=0,
+                    impossible_travel=False,
+                    account_lockouts=0,
+                    trust_score=84,
+                    trust_level="High",
+                    ai_recommendation="Analysis: The user maintains a high baseline of trust. Authentication patterns are stable and secure. Recommended Action: Continue standard monitoring. No immediate action required."
+                )
+            ]
+            db.add_all(sample_data)
+            db.commit()
+    except Exception as e:
+        logger.error(f"Error seeding user trust data: {e}")
+
 # Database Setup on Startup
 @app.on_event("startup")
 def startup_event():
@@ -217,6 +246,7 @@ def startup_event():
         logger.info("Database loaded successfully.")
         seed_burnout_data()
         seed_insider_motivation_data()
+        seed_user_trust_data()
     except Exception as e:
         logger.error(f"Database init failed: {e}")
     asyncio.create_task(keepalive_ping())
@@ -287,6 +317,8 @@ if burnout:
     app.include_router(burnout.router, prefix=settings.API_V1_STR)
 if insider_motivation:
     app.include_router(insider_motivation.router, prefix=settings.API_V1_STR)
+if trust_score:
+    app.include_router(trust_score.router)
 if alert_router:
     app.include_router(alert_router)
 

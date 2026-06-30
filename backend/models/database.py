@@ -155,6 +155,38 @@ class InsiderMotivationRecord(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
+class UserTrustRecord(Base):
+    __tablename__ = "user_trust_scores"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(String(100), index=True, nullable=False)
+    name = Column(String(255), nullable=False)
+    department = Column(String(255), nullable=True)
+    role = Column(String(100), nullable=True)
+    
+    last_login = Column(DateTime, nullable=True)
+    failed_login_attempts = Column(Integer, default=0)
+    mfa_status = Column(Boolean, default=True)
+    password_strength = Column(String(50), default="STRONG") # STRONG, MEDIUM, WEAK
+    device_reputation = Column(String(50), default="KNOWN") # KNOWN, UNKNOWN, SUSPICIOUS
+    ip_address = Column(String(100), nullable=True)
+    browser = Column(String(100), nullable=True)
+    location = Column(String(255), nullable=True)
+    vpn_usage = Column(Boolean, default=False)
+    impossible_travel = Column(Boolean, default=False)
+    account_lockouts = Column(Integer, default=0)
+    privilege_level = Column(String(50), default="USER") # USER, ADMIN, ROOT
+    
+    login_history = Column(JSON, nullable=True)
+    recent_security_events = Column(JSON, nullable=True)
+    
+    trust_score = Column(Integer, default=100)
+    trust_level = Column(String(50), default="High") # High, Medium, Low
+    ai_recommendation = Column(Text, nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

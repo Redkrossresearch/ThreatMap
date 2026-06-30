@@ -12,7 +12,8 @@ import {
   Activity,
   CheckCircle2,
   XCircle,
-  Zap
+  Zap,
+  Loader2
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -49,12 +50,53 @@ const negativeFactors = [
 ];
 
 export default function UserTrustScoreDashboard() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   
   useEffect(() => {
     setMounted(true);
+    async function fetchData() {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+        // The router was mounted outside of v1 prefix in main.py, so it's just /api/trust-score, 
+        // but wait, I just mounted it at `/api/trust-score` in `main.py`!
+        // To avoid URL resolution issues, let's use relative or exact URL.
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL.replace('/v1', '')}/trust-score` : "http://127.0.0.1:8000/api/trust-score";
+        
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error("Failed to fetch user trust score data");
+        const json = await res.json();
+        if (json && json.length > 0) {
+          setData(json[0]); // Using the first seeded user (John Doe)
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <Loader2 className="animate-spin text-primary w-10 h-10" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center text-error">
+        Error loading dashboard: {error || "No data found"}
+      </div>
+    );
+  }
+
+  const trustScore = data.trust_score || 0;
   const circumference = 2 * Math.PI * 120; // radius = 120
   const strokeDashoffset = circumference - (trustScore / 100) * circumference;
   
@@ -83,7 +125,7 @@ export default function UserTrustScoreDashboard() {
         </div>
         <div className="hidden sm:block">
            <span className="px-3 py-1 bg-white/5 text-white text-[10px] font-mono-sm uppercase border border-white/10 rounded">
-             User: jdoe@company.local
+             User: {data.user_id}
            </span>
         </div>
       </div>
@@ -273,7 +315,7 @@ export default function UserTrustScoreDashboard() {
                 Score Analysis
               </h4>
               <p className="text-sm leading-relaxed text-on-surface-variant">
-                The user maintains a high baseline of trust due to strict adherence to hardware-based MFA and localized access patterns. However, recent impossible travel flags slightly reduced the score.
+                {data.ai_recommendation?.split('Recommended Action:')[0] || "Analysis processing..."}
               </p>
             </div>
             
@@ -282,9 +324,7 @@ export default function UserTrustScoreDashboard() {
               <div>
                 <h4 className="text-xs font-bold text-primary uppercase mb-1 tracking-widest">Suggested Actions</h4>
                 <ul className="text-xs text-on-surface-variant space-y-1.5 list-disc list-inside">
-                  <li>Mandate a password reset policy immediately.</li>
-                  <li>Verify the impossible travel event with the user directly.</li>
-                  <li>No conditional access restrictions required at this time.</li>
+                  <li>{data.ai_recommendation?.split('Recommended Action:')[1] || "No recommendations generated."}</li>
                 </ul>
               </div>
             </div>
