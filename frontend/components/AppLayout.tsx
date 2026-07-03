@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, signIn, signOut } from "next-auth/react";
 import AnimatedBackground from "./AnimatedBackground";
-import NotificationBell from "./NotificationBell";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -14,8 +13,6 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const pathname = usePathname();
-  const [alerts, setAlerts] = React.useState<any[]>([]);
-  const [showNotifications, setShowNotifications] = React.useState(false);
   const [showProfileMenu, setShowProfileMenu] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isDarkMode, setIsDarkMode] = React.useState(true);
@@ -44,9 +41,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     // We import api dynamically or use the global api if it was imported. 
     // Wait, let's import it at the top of the file!
     import("@/lib/api").then(({ api }) => {
-      api.getDashboardStats().then((stats) => {
-        setAlerts(stats.alerts);
-      }).catch(err => console.error(err));
+      api.getDashboardStats().catch(err => console.error(err));
     });
   }, [pathname]);
 
@@ -72,9 +67,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <span className="material-symbols-outlined text-[20px]">build</span>,
     },
     {
-      name: "Watchlist & Alerts",
+      name: "Watchlist",
       href: "/watchlist",
       icon: <span className="material-symbols-outlined text-[20px]">visibility</span>,
+    },
+    {
+      name: "Audit Logs",
+      href: "/audit",
+      icon: <span className="material-symbols-outlined text-[20px]">history_edu</span>,
     },
     {
       name: "Threat Actors",
@@ -228,7 +228,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 : pathname === "/dashboard"
                 ? "Dashboard Telemetry"
                 : pathname === "/watchlist"
-                ? "Watchlist & Alerts"
+                ? "Watchlist"
+                : pathname === "/audit"
+                ? "Audit Logs"
                 : pathname === "/about"
                 ? "About ThreatMap"
                 : pathname.startsWith("/results")
@@ -243,9 +245,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <span className="material-symbols-outlined text-[12px] text-primary">dns</span>
               <span>API SERVER: /_/backend</span>
             </div>
-
-            {/* Notification Bell */}
-            <NotificationBell />
 
             {/* Profile Dropdown */}
             <div className="relative">

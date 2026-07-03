@@ -25,15 +25,13 @@ export interface WatchlistResponse {
   last_risk_score: number;
 }
 
-export interface AlertResponse {
+export interface AuditLogResponse {
   id: number;
-  indicator: string;
-  alert_type: string;
-  title: string;
-  message: string | null;
-  risk_score: number;
-  is_dismissed: boolean;
-  created_at: string;
+  action: string;
+  resource: string;
+  user_ip: string;
+  details: string | null;
+  timestamp: string;
 }
 
 export interface DashboardStats {
@@ -42,7 +40,6 @@ export interface DashboardStats {
   high_risk_assets: number;
   monitored_iocs: number;
   recent_scans: ScanResponse[];
-  alerts: AlertResponse[];
   threat_distribution: {
     critical: number;
     high: number;

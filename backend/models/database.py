@@ -42,19 +42,6 @@ class Watchlist(Base):
     webhook_url = Column(String(500), nullable=True)
 
 
-class Alert(Base):
-    __tablename__ = "alerts"
-
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    indicator = Column(String(255), index=True, nullable=False)
-    alert_type = Column(String(100), default="RISK_SHIFT") # RISK_INCREASE, WATCHED_MODIFIED, CVE_DETECTED
-    title = Column(String(255), nullable=False)
-    message = Column(Text, nullable=True)
-    risk_score = Column(Integer, default=0)
-    is_dismissed = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-
-
 class ThreatActor(Base):
     __tablename__ = "threat_actors"
 
@@ -98,6 +85,17 @@ class CommunityNote(Base):
     text = Column(Text, nullable=False)
     upvotes = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    action = Column(String(255), index=True, nullable=False)
+    resource = Column(String(255), nullable=False)
+    user_ip = Column(String(100), nullable=False)
+    details = Column(Text, nullable=True)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
 
 def init_db():

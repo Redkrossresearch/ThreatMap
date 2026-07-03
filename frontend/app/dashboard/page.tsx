@@ -54,16 +54,7 @@ export default function Dashboard() {
   const loading = statsLoading || activityLoading || topIocsLoading || apiHealthLoading;
   const error = statsError ? "Failed to fetch telemetry metrics from backend." : "";
 
-  const dismissMutation = useMutation({
-    mutationFn: (alertId: number) => api.dismissAlert(alertId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
-    },
-  });
 
-  const handleDismissAlert = (alertId: number) => {
-    dismissMutation.mutate(alertId);
-  };
 
   if (loading) {
     return (
@@ -286,8 +277,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Split Row: API Health, Risk Allocation, Incident Alert Center */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Split Row: API Health, Risk Allocation */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Left 1 Span: API Health Status */}
         <div className="glass-panel p-lg rounded-xl flex flex-col justify-between">
@@ -336,45 +327,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right 1 Span: Incident Alert Center */}
-        <div className="glass-panel p-lg rounded-xl flex flex-col justify-between max-h-[300px]">
-          <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-4 shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[20px]">notifications_active</span>
-              <h3 className="font-bold text-white text-md font-headline-sm">Alert Center</h3>
-            </div>
-            <span className="text-[10px] bg-error-container/20 text-error px-2 py-0.5 border border-error-container/30 rounded font-mono-sm uppercase">
-              {stats.alerts.length} Incidents
-            </span>
-          </div>
-
-          <div className="space-y-3 overflow-y-auto pr-1 hide-scrollbar">
-            {stats.alerts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-on-surface-variant/40 space-y-2">
-                <CheckCircle size={36} className="text-primary/40 animate-pulse" />
-                <p className="text-[10px] font-mono-sm text-center">ALL WATCHLIST REPUTATIONS STABLE</p>
-              </div>
-            ) : (
-              stats.alerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="p-3 bg-surface-container-low border border-white/5 rounded-lg flex flex-col gap-2 hover:border-white/10 transition-all"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs font-bold text-white font-headline-sm leading-tight">{alert.title}</span>
-                    <button
-                      onClick={() => handleDismissAlert(alert.id)}
-                      className="p-1 hover:bg-white/5 rounded text-on-surface-variant hover:text-white transition-all text-[10px] font-mono-sm"
-                    >
-                      DISMISS
-                    </button>
-                  </div>
-                  <p className="text-xs text-on-surface-variant line-clamp-2">{alert.message}</p>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Recent Scans Feed Table */}
