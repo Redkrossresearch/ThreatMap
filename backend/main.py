@@ -194,6 +194,13 @@ def startup_event():
     except Exception as e:
         logger.error(f"Database init failed: {e}")
     asyncio.create_task(keepalive_ping())
+    
+    # Start automated reporter
+    try:
+        from services.automated_reporter import automated_report_loop
+        asyncio.create_task(automated_report_loop())
+    except Exception as e:
+        logger.error(f"Failed to start automated reporter: {e}")
 
 # WebSocket Connection Manager
 from fastapi import WebSocket, WebSocketDisconnect
