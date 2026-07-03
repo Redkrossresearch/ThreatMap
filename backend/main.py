@@ -17,14 +17,20 @@ from sqlalchemy.orm import Session
 
 try:
     from core.config import settings
-    from models.database import init_db, get_db, Scan, Watchlist, Alert
+    from models.database import init_db, get_db, Scan, Watchlist
     from models.schemas import DashboardStats
-    from alert_models import AlertRule, AlertNotification
-    from alert_routes import router as alert_router
     print("Core imports OK")
 except Exception as e:
     print(f"Core import error: {e}")
     traceback.print_exc()
+
+try:
+    from audit_routes import router as audit_router
+    print("audit router imported OK")
+except Exception as e:
+    print(f"audit router failed: {e}")
+    traceback.print_exc()
+    audit_router = None
 
 try:
     from routers import ip
@@ -130,6 +136,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def audit_log_middleware(request: Request, call_next):
+    response = await call_next(request)
+    
+    # Only log mutating requests or specific analysis endpoints
+    if request.method in ["POST", "PUT", "DELETE", "PATCH"] or "/analyze/" in request.url.path:
+        try:
+            from models.database import SessionLocal, AuditLog
+            db = SessionLocal()
+            client_ip = request.client.host if request.client else "unknown"
+            
+            db_log = AuditLog(
+                action=request.method,
+                resource=request.url.path,
+                user_ip=client_ip,
+                details=f"Status: {response.status_code}"
+            )
+            db.add(db_log)
+            db.commit()
+            db.close()
+        except Exception as e:
+            logger.error(f"Failed to write audit log: {e}")
+            
+    return response
+
 # Global Exception Handler — catches ALL unhandled exceptions
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -226,8 +257,8 @@ if chat:
     app.include_router(chat.router, prefix=settings.API_V1_STR)
 if tools:
     app.include_router(tools.router, prefix=settings.API_V1_STR)
-if alert_router:
-    app.include_router(alert_router)
+if audit_router:
+    app.include_router(audit_router, prefix=settings.API_V1_STR)
 
 try:
     from routers import threat_actors
@@ -253,12 +284,22 @@ except Exception as e:
     traceback.print_exc()
     notes = None
 
+try:
+    from routers import email_blacklist
+    print("email_blacklist router imported OK")
+except Exception as e:
+    print(f"email_blacklist router failed: {e}")
+    traceback.print_exc()
+    email_blacklist = None
+
 if threat_actors:
     app.include_router(threat_actors.router, prefix=settings.API_V1_STR)
 if campaigns:
     app.include_router(campaigns.router, prefix=settings.API_V1_STR)
 if notes:
     app.include_router(notes.router, prefix=settings.API_V1_STR)
+if email_blacklist:
+    app.include_router(email_blacklist.router, prefix=settings.API_V1_STR)
 
 from models.schemas import ScanResponse
 from services.threat_intel import find_linked_actors
@@ -350,8 +391,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
         # 5. Recent scans
         recent_scans = db.query(Scan).order_by(Scan.created_at.desc()).limit(10).all()
 
-        # 6. Active alerts
-        active_alerts = db.query(Alert).filter(Alert.is_dismissed == False).order_by(Alert.created_at.desc()).limit(10).all()
+        # 6. Active alerts (Removed)
+        active_alerts = []
 
         # 7. Threat distribution percentages
         dist = {"critical": 0, "high": 0, "medium": 0, "low": 0}

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ScanResponse, WatchlistResponse, AlertResponse, DashboardStats } from "../types";
+import { ScanResponse, WatchlistResponse, AuditLogResponse, DashboardStats } from "../types";
 
 let base = process.env.NEXT_PUBLIC_API_URL || "/_/backend/api/v1";
 if (base && base.startsWith('http') && !base.endsWith('/api/v1')) {
@@ -84,16 +84,9 @@ export const api = {
     return response.data;
   },
 
-  // Alerts Management
-  getAlerts: async (): Promise<AlertResponse[]> => {
-    const response = await apiClient.get<AlertResponse[]>("/watchlist/alerts");
-    return response.data;
-  },
-
-  dismissAlert: async (alertId: number): Promise<AlertResponse> => {
-    const response = await apiClient.put<AlertResponse>(`/watchlist/alerts/${alertId}`, {
-      is_dismissed: true,
-    });
+  // Audit Logs
+  getAuditLogs: async (): Promise<AuditLogResponse[]> => {
+    const response = await apiClient.get<AuditLogResponse[]>("/audit-logs");
     return response.data;
   },
 
@@ -263,6 +256,10 @@ export const api = {
   },
 
   // Tools
+  toolsEmailBlacklist: async (email: string) => {
+    const response = await apiClient.post(`/email/blacklist-check`, { email });
+    return response.data;
+  },
   toolsEmailHeaders: async (rawHeaders: string) => {
     const response = await apiClient.post(`/tools/email-headers`, { raw_headers: rawHeaders });
     return response.data;

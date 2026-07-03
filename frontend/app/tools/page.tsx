@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 
 const TOOLS = [
+  { id: 'email_blacklist', name: 'Email Blacklist Check', icon: 'gpp_bad', desc: 'Check if an email domain is blacklisted' },
   { id: 'email', name: 'Email Header Analyzer', icon: 'mail', desc: 'Extract and analyze email headers for spoofing' },
   { id: 'typo', name: 'Typosquatting Detector', icon: 'spellcheck', desc: 'Find active variations of a domain' },
   { id: 'decode', name: 'Base64/Hex Decoder', icon: 'code_blocks', desc: 'Decode malicious payloads' },
@@ -43,6 +44,9 @@ export default function ToolsPage() {
     try {
       let res;
       switch (activeTool) {
+        case 'email_blacklist':
+          res = await api.toolsEmailBlacklist(input);
+          break;
         case 'email':
           res = await api.toolsEmailHeaders(input);
           break;
@@ -206,6 +210,7 @@ export default function ToolsPage() {
 
   const getPlaceholder = () => {
       switch (activeTool) {
+          case 'email_blacklist': return "test@example.com";
           case 'email': return "Paste raw email headers here...";
           case 'typo': return "example.com";
           case 'decode': return "Paste base64 or hex string...";
