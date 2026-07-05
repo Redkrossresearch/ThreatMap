@@ -140,9 +140,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi import HTTPException
 # Global Exception Handler — catches ALL unhandled exceptions
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, HTTPException) or hasattr(exc, 'status_code'):
+        # Let Starlette handle its own HTTPExceptions (like 404)
+        from fastapi.responses import JSONResponse
+        status_code = getattr(exc, 'status_code', 500)
+        detail = getattr(exc, 'detail', str(exc))
+        return JSONResponse(status_code=status_code, content={"detail": detail})
+    
     error_msg = traceback.format_exc()
     logger.error(f"UNHANDLED EXCEPTION on {request.method} {request.url}:\n{error_msg}")
     return JSONResponse(

@@ -2,9 +2,9 @@ import os
 from groq import Groq
 from core.config import settings
 
-# Initialize the Groq client. It will automatically pick up GROQ_API_KEY from environment variables if set,
-# or we can pass it explicitly.
-client = Groq(api_key=settings.GROQ_API_KEY)
+# Initialize the Groq client. Provide a fallback dummy key to prevent import-time exceptions on Vercel
+api_key = settings.GROQ_API_KEY or os.environ.get("GROQ_API_KEY") or "dummy_key_to_prevent_crash"
+client = Groq(api_key=api_key)
 
 AVAILABLE_MODELS = {
     "llama-3.3-70b-versatile": "Llama 3.3 70B (Legacy)",

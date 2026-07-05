@@ -248,3 +248,6 @@ class AICopilotConversation(Base):
     confidence_score = Column(Integer, default=0)
     conversation_summary = Column(Text, nullable=True)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+
+# Ensure tables are created in serverless environments
+init_db()
