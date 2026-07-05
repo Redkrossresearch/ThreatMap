@@ -140,6 +140,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def strip_backend_prefix(request: Request, call_next):
+    # Vercel's experimentalServices might forward requests with /_/backend
+    if request.scope["path"].startswith("/_/backend"):
+        request.scope["path"] = request.scope["path"].replace("/_/backend", "", 1)
+    response = await call_next(request)
+    return response
+
+
 from fastapi import HTTPException
 # Global Exception Handler — catches ALL unhandled exceptions
 @app.exception_handler(Exception)
