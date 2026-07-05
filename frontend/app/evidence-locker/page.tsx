@@ -10,7 +10,7 @@ export default function EvidenceLockerPage() {
 
   const fetchFiles = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/v1/evidence/");
+      const response = await fetch("/_/backend/api/v1/evidence/");
       if (!response.ok) throw new Error("Failed to fetch evidence files");
       const data = await response.json();
       setFiles(data);
@@ -33,7 +33,7 @@ export default function EvidenceLockerPage() {
     
     try {
       setLoading(true);
-      const res = await fetch("http://127.0.0.1:8000/api/v1/evidence/upload", {
+      const res = await fetch("/_/backend/api/v1/evidence/upload", {
         method: "POST",
         body: formData
       });
@@ -48,7 +48,7 @@ export default function EvidenceLockerPage() {
   const handleDelete = async (id: number) => {
     try {
       setLoading(true);
-      const res = await fetch(`http://127.0.0.1:8000/api/v1/evidence/${id}`, { method: "DELETE" });
+      const res = await fetch(`/_/backend/api/v1/evidence/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
       fetchFiles();
     } catch (err: any) {

@@ -7,7 +7,7 @@ export default function IocTrackerPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/v1/ioc-tracker/")
+    fetch("/_/backend/api/v1/ioc-tracker/")
       .then(res => res.json())
       .then(data => setIocs(data))
       .catch(console.error)

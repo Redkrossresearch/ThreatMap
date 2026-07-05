@@ -7,7 +7,7 @@ export default function ExecutiveSummaryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/v1/executive-summary/")
+    fetch("/_/backend/api/v1/executive-summary/")
       .then(res => res.json())
       .then(data => setStats(data))
       .catch(console.error)

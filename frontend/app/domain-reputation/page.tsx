@@ -11,7 +11,7 @@ export default function DomainReputationPage() {
     if (!domain) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/v1/domain-reputation/${domain}`);
+      const res = await fetch(`/_/backend/api/v1/domain-reputation/${domain}`);
       const data = await res.json();
       setHistory(data);
     } catch (e) {

@@ -7,7 +7,7 @@ export default function AlertPrioritizerPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/v1/alert-prioritizer/prioritized")
+    fetch("/_/backend/api/v1/alert-prioritizer/prioritized")
       .then(res => res.json())
       .then(data => setAlerts(data))
       .catch(console.error)

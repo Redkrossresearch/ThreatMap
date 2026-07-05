@@ -14,7 +14,7 @@ export default function PhishingAnalyzerPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/phishing/analyze?url=${encodeURIComponent(url)}`, { method: "POST" });
+      const response = await fetch(`/_/backend/api/v1/phishing/analyze?url=${encodeURIComponent(url)}`, { method: "POST" });
       if (!response.ok) throw new Error("Failed to analyze URL");
       const data = await response.json();
       setResult(data);

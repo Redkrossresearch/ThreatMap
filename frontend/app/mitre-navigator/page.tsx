@@ -7,7 +7,7 @@ export default function MitreNavigatorPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/v1/mitre/")
+    fetch("/_/backend/api/v1/mitre/")
       .then(res => res.json())
       .then(data => setTechs(data))
       .catch(console.error)

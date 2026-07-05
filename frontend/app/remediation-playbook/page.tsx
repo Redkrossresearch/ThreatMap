@@ -7,7 +7,7 @@ export default function RemediationPlaybookPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/v1/playbooks/")
+    fetch("/_/backend/api/v1/playbooks/")
       .then(res => res.json())
       .then(data => setPlaybooks(data))
       .catch(console.error)

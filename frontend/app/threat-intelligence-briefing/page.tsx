@@ -7,7 +7,7 @@ export default function ThreatIntelligenceBriefingPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/v1/threat-intel/")
+    fetch("/_/backend/api/v1/threat-intel/")
       .then(res => res.json())
       .then(data => setBriefings(data))
       .catch(console.error)

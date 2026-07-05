@@ -189,11 +189,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <span className="material-symbols-outlined text-[20px]">track_changes</span>,
     },
     {
-      name: "Dark Web",
-      href: "/dark-web",
-      icon: <span className="material-symbols-outlined text-[20px]">visibility_off</span>,
-    },
-    {
       name: "Malware Explorer",
       href: "/malware-explorer",
       icon: <span className="material-symbols-outlined text-[20px]">pest_control</span>,

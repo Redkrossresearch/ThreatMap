@@ -11,7 +11,7 @@ export default function GeoHeatmapPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/v1/geo-heatmap/");
+        const response = await fetch("/_/backend/api/v1/geo-heatmap/");
         if (!response.ok) throw new Error("Failed to fetch geo heatmap data");
         const json = await response.json();
         setData(json);

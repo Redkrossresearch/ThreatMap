@@ -11,7 +11,7 @@ export default function IncidentBoardPage() {
   useEffect(() => {
     const fetchIncidents = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/v1/incidents/");
+        const response = await fetch("/_/backend/api/v1/incidents/");
         if (!response.ok) throw new Error("Failed to fetch incidents");
         const data = await response.json();
         setIncidents(data);

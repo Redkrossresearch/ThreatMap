@@ -283,11 +283,10 @@ if bulk_upload:
     app.include_router(bulk_upload.router, prefix=settings.API_V1_STR)
 
 try:
-    from routers import incidents, attack_surface, ioc_graph, dark_web, malware, phishing, cve, geo_heatmap, evidence
+    from routers import incidents, attack_surface, ioc_graph, malware, phishing, cve, geo_heatmap, evidence
     app.include_router(incidents.router, prefix=settings.API_V1_STR)
     app.include_router(attack_surface.router, prefix=settings.API_V1_STR)
     app.include_router(ioc_graph.router, prefix=settings.API_V1_STR)
-    app.include_router(dark_web.router, prefix=settings.API_V1_STR)
     app.include_router(malware.router, prefix=settings.API_V1_STR)
     app.include_router(phishing.router, prefix=settings.API_V1_STR)
     app.include_router(cve.router, prefix=settings.API_V1_STR)

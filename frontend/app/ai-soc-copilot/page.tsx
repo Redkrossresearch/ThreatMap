@@ -16,7 +16,7 @@ export default function AISOCCopilotPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "/_/backend/api/v1";
 
   useEffect(() => {
     fetchHistory();

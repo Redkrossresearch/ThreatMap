@@ -14,7 +14,7 @@ export default function IocGraphPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/ioc-graph/${indicator}`);
+      const response = await fetch(`/_/backend/api/v1/ioc-graph/${indicator}`);
       if (!response.ok) throw new Error("Failed to fetch graph data");
       const data = await response.json();
       setGraphData(data);
